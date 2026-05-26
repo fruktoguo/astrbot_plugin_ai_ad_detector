@@ -1,0 +1,6 @@
+name: astrbot_plugin_ai_ad_detector
+display_name: AI 广告识别
+desc: 调用 AI 识别群聊文本、图片和昵称中的广告/引流内容，并按群配置通知或撤回。
+version: v0.1.0
+author: YuoHira
+repo: https://github.com/fruktoguo/astrbot_plugin_ai_ad_detector

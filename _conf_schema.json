@@ -1,0 +1,175 @@
+{
+  "basic": {
+    "description": "基础设置",
+    "type": "object",
+    "hint": "控制总开关、默认处理动作、识别阈值、图片数量和调试输出。",
+    "items": {
+      "enabled": {
+        "description": "启用插件",
+        "type": "bool",
+        "default": true
+      },
+      "default_action": {
+        "description": "默认命中动作",
+        "hint": "log 仅记录日志；notify 群内通知；recall 撤回；recall_and_notify 撤回并通知。",
+        "type": "string",
+        "options": [
+          "log",
+          "notify",
+          "recall",
+          "recall_and_notify"
+        ],
+        "default": "notify"
+      },
+      "confidence_threshold": {
+        "description": "默认广告置信度阈值",
+        "hint": "AI 返回 confidence 大于等于此值时才执行动作。建议 0.70-0.85。",
+        "type": "float",
+        "default": 0.72
+      },
+      "ignore_admins": {
+        "description": "忽略管理员消息",
+        "type": "bool",
+        "default": true
+      },
+      "ignore_self": {
+        "description": "忽略机器人自身消息",
+        "type": "bool",
+        "default": true
+      },
+      "max_images": {
+        "description": "每条消息最多识别图片数",
+        "type": "int",
+        "default": 3
+      },
+      "message_cooldown_seconds": {
+        "description": "重复消息冷却秒数",
+        "hint": "避免同一消息被平台重复上报时反复调用 AI。",
+        "type": "int",
+        "default": 3
+      },
+      "notify_prefix": {
+        "description": "命中通知前缀",
+        "type": "string",
+        "default": "检测到疑似广告"
+      },
+      "debug_mode": {
+        "description": "调试模式",
+        "hint": "开启后在插件数据目录 debug 文件夹保存 AI prompt、图片路径和响应。",
+        "type": "bool",
+        "default": false
+      }
+    }
+  },
+  "llm": {
+    "description": "默认模型设置",
+    "type": "object",
+    "hint": "各群规则未单独指定模型时使用这里的 provider。",
+    "items": {
+      "provider_id": {
+        "description": "默认 AI 模型提供商",
+        "hint": "留空时使用 AstrBot 当前默认或第一个可用聊天模型。需要能处理图片时请选择支持视觉的模型。",
+        "type": "string",
+        "default": "",
+        "_special": "select_provider"
+      },
+      "max_concurrent": {
+        "description": "最大并发识别数",
+        "type": "int",
+        "default": 1
+      },
+      "retries": {
+        "description": "LLM 调用重试次数",
+        "type": "int",
+        "default": 3
+      },
+      "retry_backoff_seconds": {
+        "description": "LLM 重试退避秒数",
+        "type": "int",
+        "default": 3
+      }
+    }
+  },
+  "prompts": {
+    "description": "广告识别提示词",
+    "type": "object",
+    "hint": "可按你的群规改写。提示词中可使用 ${payload_json} 插入昵称、文本和图片数量；不写也会自动追加。",
+    "items": {
+      "ad_detection_prompt": {
+        "description": "广告识别提示词",
+        "type": "text",
+        "default": "你是群聊广告风控审核员。请根据用户昵称、聊天文本和附带图片判断这条群消息是否为广告、引流、推广或诈骗。\n\n重点识别：\n- 兼职、刷单、代付、返利、抽奖、福利、红包群、贷款、博彩、理财、虚拟币、色情、陪玩、灰产、外挂、账号交易。\n- 引导添加好友、私聊、扫码、进群、点击链接、复制口令、关注公众号/频道/店铺。\n- 图片中的二维码、联系方式、水印、价格表、推广海报、招聘/项目收益截图。\n- 昵称本身带有广告、联系方式、推广词，即使正文很短也要判断。\n\n降低误判：\n- 正常技术讨论、游戏交流、群友闲聊、对广告现象的吐槽或引用，不应判为广告。\n- 只有普通链接或普通图片，缺少推广/引流/交易意图时不要轻易判定。\n\n必须只返回 JSON，不要输出 Markdown：\n{\n  \"is_ad\": true 或 false,\n  \"confidence\": 0 到 1 的数字,\n  \"category\": \"广告类型，非广告时为空字符串\",\n  \"reason\": \"一句话说明依据\",\n  \"evidence\": [\"命中的关键词、昵称特征、图片特征或引流动作\"]\n}\n"
+      }
+    }
+  },
+  "monitors": {
+    "description": "群聊监控规则",
+    "hint": "每条规则对应一个群。可以为不同群配置不同模型、阈值和处理动作。",
+    "type": "template_list",
+    "default": [],
+    "templates": {
+      "monitor": {
+        "name": "群聊广告监控",
+        "items": {
+          "enabled": {
+            "description": "启用此规则",
+            "type": "bool",
+            "default": true
+          },
+          "group_id": {
+            "description": "群号",
+            "type": "string",
+            "default": ""
+          },
+          "platform_id": {
+            "description": "平台 ID",
+            "hint": "多平台时用于指定发送通知的平台；单 QQ/OneBot 平台可留空。",
+            "type": "string",
+            "default": ""
+          },
+          "provider_id": {
+            "description": "此群单独使用的 AI 模型提供商",
+            "hint": "留空则使用默认模型。识别图片需要选择视觉模型。",
+            "type": "string",
+            "default": "",
+            "_special": "select_provider"
+          },
+          "action": {
+            "description": "此群命中动作",
+            "hint": "留空使用默认动作。",
+            "type": "string",
+            "options": [
+              "",
+              "log",
+              "notify",
+              "recall",
+              "recall_and_notify"
+            ],
+            "default": ""
+          },
+          "confidence_threshold": {
+            "description": "此群广告置信度阈值",
+            "hint": "留空或 0 使用默认阈值。",
+            "type": "float",
+            "default": 0.72
+          },
+          "ignore_admins": {
+            "description": "此群忽略管理员",
+            "type": "bool",
+            "default": true
+          },
+          "ignore_self": {
+            "description": "此群忽略机器人自身",
+            "type": "bool",
+            "default": true
+          },
+          "max_images": {
+            "description": "此群每条消息最多识别图片数",
+            "type": "int",
+            "default": 3
+          }
+        }
+      }
+    }
+  }
+}
