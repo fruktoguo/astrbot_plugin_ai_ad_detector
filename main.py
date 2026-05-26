@@ -45,6 +45,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "confidence_threshold": 0.72,
         "ignore_admins": True,
         "ignore_self": True,
+        "skip_command_messages": True,
         "max_images": 3,
         "message_cooldown_seconds": 3,
         "notify_prefix": "检测到疑似广告",
@@ -250,17 +251,16 @@ class AIAdDetectorPlugin(Star):
             logger.warning(f"AI 广告识别失败 group={group_id}: {exc}")
             return
 
-        threshold = safe_float(
-            monitor.get("confidence_threshold", self._basic_config().get("confidence_threshold")),
-            0.72,
-            0.0,
-            1.0,
-        )
+        threshold = self._confidence_threshold(monitor)
         if result["is_ad"] and result["confidence"] >= threshold:
             await self._handle_detection(event, monitor, payload, result)
 
     def _should_skip(self, event: AstrMessageEvent, monitor: dict[str, Any]) -> bool:
         sender_id = str(event.get_sender_id() or "")
+        if bool(monitor.get("skip_command_messages", self._basic_config().get("skip_command_messages", True))):
+            text = str(event.get_message_str() or "").lstrip()
+            if text.startswith("/"):
+                return True
         ignore_self = bool(monitor.get("ignore_self", self._basic_config().get("ignore_self", True)))
         if ignore_self and self.bot_id and sender_id == self.bot_id:
             return True
@@ -268,6 +268,12 @@ class AIAdDetectorPlugin(Star):
         if ignore_admins and bool(event.is_admin()):
             return True
         return False
+
+    def _confidence_threshold(self, monitor: dict[str, Any]) -> float:
+        raw = monitor.get("confidence_threshold")
+        if raw in (None, "", 0, 0.0, "0"):
+            raw = self._basic_config().get("confidence_threshold")
+        return safe_float(raw, 0.72, 0.0, 1.0)
 
     def _build_payload(self, event: AstrMessageEvent) -> dict[str, Any]:
         sender_id = str(event.get_sender_id() or "")

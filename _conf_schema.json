@@ -37,6 +37,12 @@
         "type": "bool",
         "default": true
       },
+      "skip_command_messages": {
+        "description": "跳过斜杠命令消息",
+        "hint": "开启后 / 开头的消息不会调用 AI 识别，避免插件状态命令等被误审。",
+        "type": "bool",
+        "default": true
+      },
       "max_images": {
         "description": "每条消息最多识别图片数",
         "type": "int",
@@ -160,6 +166,11 @@
           },
           "ignore_self": {
             "description": "此群忽略机器人自身",
+            "type": "bool",
+            "default": true
+          },
+          "skip_command_messages": {
+            "description": "此群跳过斜杠命令消息",
             "type": "bool",
             "default": true
           },

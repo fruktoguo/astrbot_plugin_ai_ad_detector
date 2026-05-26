@@ -16,6 +16,7 @@ AstrBot 群聊广告识别插件。插件会把群消息的文本、图片和发
 
 - `basic.default_action`：默认命中动作。
 - `basic.confidence_threshold`：默认置信度阈值，建议从 `0.72` 开始。
+- `basic.skip_command_messages`：跳过 `/` 开头的命令消息，避免状态命令触发 AI 审核。
 - `llm.provider_id`：默认模型。图片识别需要选择支持视觉的模型。
 - `prompts.ad_detection_prompt`：广告识别提示词。可使用 `${payload_json}` 插入待审核消息 JSON。
 - `monitors`：群聊监控规则。每条规则填写一个 `group_id`，可单独覆盖 `provider_id`、`action`、`confidence_threshold`。
